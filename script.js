@@ -165,9 +165,12 @@ function run() {
       text += `  Exp Damage: ${result.expectedDamage[id].toFixed(2)}\n\n`;
     }
 
-    text += "--- Combo Stats ---\n";
-    text += `Both Destroyed: ${(result.bothDestroyedProb * 100).toFixed(2)}%\n`;
-    text += `Either Destroyed: ${(result.eitherDestroyedProb * 100).toFixed(2)}%\n`;
+    // --- Only show combo if exactly 2 are selected ---
+    if (combo.length === 2) {
+      text += "--- Combo Stats ---\n";
+      text += `Both Destroyed: ${(result.bothDestroyedProb * 100).toFixed(2)}%\n`;
+      text += `Either Destroyed: ${(result.eitherDestroyedProb * 100).toFixed(2)}%\n`;
+    }
 
     document.getElementById("output").textContent = text;
 
