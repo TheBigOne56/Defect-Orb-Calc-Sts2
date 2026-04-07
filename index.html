@@ -116,9 +116,12 @@ function addOrb(type = "L", dmg = 1) {
 }
 
 // ---------- COMBO UI ----------
+let selectedCombo = []; // keeps track of currently selected combo targets
+
 function refreshCombo() {
   const comboDiv = document.getElementById("comboList");
   comboDiv.innerHTML = "";
+  selectedCombo = []; // reset selection whenever targets are refreshed
 
   const targets = document.querySelectorAll("#targetsList .row");
 
@@ -129,9 +132,27 @@ function refreshCombo() {
     const label = document.createElement("label");
     label.style.display = "block";
 
-    label.innerHTML = `
-      <input type="checkbox" value="${name}"> ${name}
-    `;
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.value = name;
+
+    // add event listener to enforce 2-selection limit
+    checkbox.addEventListener("change", function() {
+      if (this.checked) {
+        selectedCombo.push(this);
+        if (selectedCombo.length > 2) {
+          // uncheck oldest selection
+          const old = selectedCombo.shift();
+          old.checked = false;
+        }
+      } else {
+        // remove from selection if unchecked
+        selectedCombo = selectedCombo.filter(cb => cb !== this);
+      }
+    });
+
+    label.appendChild(checkbox);
+    label.appendChild(document.createTextNode(" " + name));
 
     comboDiv.appendChild(label);
   });
