@@ -3,7 +3,7 @@ function calculateExactStats(targetsHp, orbSequence, comboTargets) {
   const initialState = Object.values(targetsHp);
   states.set(JSON.stringify(initialState), 1.0);
 
-  const targetIds = Object.keys(targetsHp).map(Number);
+  const targetIds = Object.keys(targetsHp);
 
   for (const [orbType, dmg] of orbSequence) {
     const nextStates = new Map();
@@ -97,12 +97,70 @@ function run() {
     const orbs = JSON.parse(document.getElementById("orbs").value);
     const combo = JSON.parse(document.getElementById("combo").value);
 
+    const targetIds = Object.keys(targets);
+
+    // --- VALIDATION ---
+
+    if (targetIds.length === 0) {
+      throw new Error("You must have at least 1 target.");
+    }
+
+    if (targetIds.length > 20) {
+      throw new Error("Maximum 20 targets allowed.");
+    }
+
+    if (!Array.isArray(orbs)) {
+      throw new Error("Orb sequence must be an array.");
+    }
+
+    if (orbs.length === 0) {
+      throw new Error("You must have at least 1 orb.");
+    }
+
+    if (orbs.length > 20) {
+      throw new Error("Maximum 20 orbs allowed.");
+    }
+
+    for (const orb of orbs) {
+      if (!Array.isArray(orb) || orb.length !== 2) {
+        throw new Error("Each orb must be like ['L', 1]");
+      }
+
+      const [type, dmg] = orb;
+
+      if (type !== "L" && type !== "G") {
+        throw new Error("Orb type must be 'L' or 'G'");
+      }
+
+      if (typeof dmg !== "number" || dmg < 0) {
+        throw new Error("Orb damage must be a positive number");
+      }
+    }
+
+    if (!Array.isArray(combo)) {
+      throw new Error("Combo targets must be an array.");
+    }
+
+    for (const c of combo) {
+      if (!targetIds.includes(c)) {
+        throw new Error(`Combo target "${c}" does not exist.`);
+      }
+    }
+
+    // Optional performance warning
+    if (targetIds.length * orbs.length > 150) {
+      if (!confirm("This may run slowly. Continue?")) {
+        return;
+      }
+    }
+
+    // --- RUN SIM ---
     const result = calculateExactStats(targets, orbs, combo);
 
     let text = "--- Individual Stats ---\n\n";
 
-    for (const id in result.destructionProbs) {
-      text += `Target ${id}:\n`;
+    for (const id of Object.keys(result.destructionProbs)) {
+      text += `${id}:\n`;
       text += `  Destroyed: ${(result.destructionProbs[id] * 100).toFixed(2)}%\n`;
       text += `  Exp Damage: ${result.expectedDamage[id].toFixed(2)}\n\n`;
     }
@@ -115,6 +173,6 @@ function run() {
 
   } catch (err) {
     document.getElementById("output").textContent =
-      "Error in input:\n" + err.message;
+      "Error:\n" + err.message;
   }
 }
