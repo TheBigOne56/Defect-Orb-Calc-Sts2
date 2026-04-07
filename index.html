@@ -165,38 +165,52 @@ function runUI() {
     const orbs = [];
     const combo = [];
 
-    // --- Targets ---
+    // Targets
     const targetRows = document.querySelectorAll("#targetsList .row");
+
+    if (targetRows.length === 0) throw new Error("Add at least 1 target.");
+    if (targetRows.length > 20) throw new Error("Max 20 targets.");
+
     targetRows.forEach(row => {
       const name = row.children[0].value.trim();
       const hp = Number(row.children[1].value);
+
       if (!name) throw new Error("Target missing name.");
       if (!hp || hp < 0) throw new Error("Invalid HP.");
+
       targets[name] = hp;
     });
 
-    // --- Orbs ---
+    // Orbs
     const orbRows = document.querySelectorAll("#orbsList .row");
+
+    if (orbRows.length === 0) throw new Error("Add at least 1 orb.");
+    if (orbRows.length > 20) throw new Error("Max 20 orbs.");
+
     orbRows.forEach(row => {
       const type = row.children[0].value;
       const dmg = Number(row.children[1].value);
+
+      if (!dmg || dmg < 0) throw new Error("Invalid orb damage.");
+
       orbs.push([type, dmg]);
     });
 
-    // --- Combo ---
-    document.querySelectorAll("#comboList input:checked").forEach(cb => combo.push(cb.value));
+    // Combo
+    document.querySelectorAll("#comboList input:checked")
+      .forEach(cb => combo.push(cb.value));
 
     const result = calculateExactStats(targets, orbs, combo);
 
-    // --- Build Output ---
     let text = "--- Results ---\n\n";
+
     for (const id of Object.keys(result.destructionProbs)) {
       text += `${id}:\n`;
       text += `  Destroyed: ${(result.destructionProbs[id] * 100).toFixed(2)}%\n`;
-      text += `  Exp Damage: ${(result.expectedDamage[id].toFixed(2)}\n\n`;
+      text += `  Exp Damage: ${result.expectedDamage[id].toFixed(2)}\n\n`;
     }
 
-    // --- Only show combo section if exactly 2 are selected ---
+     // --- Only show combo section if exactly 2 are selected ---
     if (combo.length === 2) {
       text += "--- Combo ---\n";
       text += `Both: ${(result.bothDestroyedProb * 100).toFixed(2)}%\n`;
@@ -209,6 +223,7 @@ function runUI() {
     document.getElementById("output").textContent = "Error:\n" + err.message;
   }
 }
+
 // ---------- STARTER DATA ----------
 addTarget("Nibbit", 15);
 addTarget("Leaf Slime", 6);
