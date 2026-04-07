@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Orb Simulator</title>
+  <style>
+    body {
+      font-family: Arial;
+      max-width: 800px;
+      margin: 40px auto;
+    }
+
+    textarea, input {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 8px;
+      font-family: monospace;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+
+    pre {
+      background: #111;
+      color: #0f0;
+      padding: 15px;
+      margin-top: 20px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Orb Simulator</h1>
+
+  <h3>Targets HP (JSON)</h3>
+  <textarea id="targets">
+{ "1": 2, "2": 3, "3": 7, "4": 5 }
+  </textarea>
+
+  <h3>Orb Sequence (JSON)</h3>
+  <textarea id="orbs">
+[ ["L",1], ["L",1], ["G",1], ["L",1], ["L",1], ["L",1] ]
+  </textarea>
+
+  <h3>Combo Targets (JSON)</h3>
+  <input id="combo" value="[1,2]" />
+
+  <button onclick="run()">Run Simulation</button>
+
+  <pre id="output"></pre>
+
+  <script src="script.js"></script>
+</body>
+</html>
