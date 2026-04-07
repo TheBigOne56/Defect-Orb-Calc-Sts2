@@ -34,20 +34,25 @@
 
   <h1>Orb Simulator</h1>
 
+  <h2>Feel free to expand JSON to add more targets/orbs. Runs on your browser only.<h2>
+
   <h3>Targets HP (JSON)</h3>
+  <h4>Second number is HP value first is just the name.</h4>
   <textarea id="targets">
-{ "1": 2, "2": 3, "3": 7, "4": 5 }
+{ "Nibbit": 15, "2": 30, "3": 7, "4": 5 }
   </textarea>
 
   <h3>Orb Sequence (JSON)</h3>
+  <h4>L=Lightning G=Glass Number=Damage // Order is Left to Right</h4>
   <textarea id="orbs">
-[ ["L",1], ["L",1], ["G",1], ["L",1], ["L",1], ["L",1] ]
+[ ["L",3], ["L",3], ["G",2], ["L",3], ["L",3], ["L",3] ]
   </textarea>
 
   <h3>Combo Targets (JSON)</h3>
+  <h4>AKA: Chance both/either are destroyed. Make sure name matches what you put in target section.</h4>
   <input id="combo" value="[1,2]" />
 
-  <button onclick="run()">Run Simulation</button>
+  <button onclick="run()">Run Probability</button>
 
   <pre id="output"></pre>
 
