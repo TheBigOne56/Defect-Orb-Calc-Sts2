@@ -9,53 +9,203 @@
       margin: 40px auto;
     }
 
-    textarea, input {
-      width: 100%;
+    h1, h2 {
       margin-bottom: 10px;
-      padding: 8px;
-      font-family: monospace;
+    }
+
+    .section {
+      margin-bottom: 25px;
+      padding: 15px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    input, select {
+      padding: 6px;
+      font-size: 14px;
     }
 
     button {
-      padding: 10px 20px;
-      font-size: 16px;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+
+    .small-btn {
+      padding: 5px 8px;
+      font-size: 12px;
     }
 
     pre {
       background: #111;
       color: #0f0;
       padding: 15px;
-      margin-top: 20px;
       white-space: pre-wrap;
     }
   </style>
 </head>
 <body>
 
-  <h1>Orb Simulator</h1>
+<h1>Orb Simulator</h1>
+<h2>Simple UI version (no JSON needed)</h2>
 
-  <h2>Feel free to expand JSON to add more targets/orbs. Runs on your browser only.<h2>
+<!-- TARGETS -->
+<div class="section">
+  <h3>Targets</h3>
+  <div id="targetsList"></div>
+  <button onclick="addTarget()">+ Add Target</button>
+</div>
 
-  <h3>Targets HP (JSON)</h3>
-  <h4>Second number is HP value first is just the name.</h4>
-  <textarea id="targets">
-{ "1": 15, "2": 30, "3": 7, "4": 5 }
-  </textarea>
+<!-- ORBS -->
+<div class="section">
+  <h3>Orb Sequence</h3>
+  <div id="orbsList"></div>
+  <button onclick="addOrb()">+ Add Orb</button>
+</div>
 
-  <h3>Orb Sequence (JSON)</h3>
-  <h4>L=Lightning G=Glass Number=Damage // Order is Left to Right</h4>
-  <textarea id="orbs">
-[ ["L",3], ["L",3], ["G",2], ["L",3], ["L",3], ["L",3] ]
-  </textarea>
+<!-- COMBO -->
+<div class="section">
+  <h3>Combo Targets</h3>
+  <div id="comboList"></div>
+</div>
 
-  <h3>Combo Targets (JSON)</h3>
-  <h4>AKA: Chance both/either are destroyed. Make sure name matches what you put in target section.</h4>
-  <input id="combo" value='["1","2"]' />
+<button onclick="runUI()">Run Probability</button>
 
-  <button onclick="run()">Run Probability</button>
+<pre id="output"></pre>
 
-  <pre id="output"></pre>
+<script src="script.js"></script>
 
-  <script src="script.js"></script>
+<script>
+// ---------- TARGET UI ----------
+function addTarget(name = "", hp = "") {
+  const div = document.createElement("div");
+  div.className = "row";
+
+  div.innerHTML = `
+    <input placeholder="Name" value="${name}">
+    <input type="number" placeholder="HP" value="${hp}">
+    <button class="small-btn" onclick="this.parentElement.remove(); refreshCombo()">X</button>
+  `;
+
+  document.getElementById("targetsList").appendChild(div);
+  refreshCombo();
+}
+
+// ---------- ORB UI ----------
+function addOrb(type = "L", dmg = 1) {
+  const div = document.createElement("div");
+  div.className = "row";
+
+  div.innerHTML = `
+    <select>
+      <option value="L" ${type === "L" ? "selected" : ""}>L</option>
+      <option value="G" ${type === "G" ? "selected" : ""}>G</option>
+    </select>
+    <input type="number" value="${dmg}">
+    <button class="small-btn" onclick="this.parentElement.remove()">X</button>
+  `;
+
+  document.getElementById("orbsList").appendChild(div);
+}
+
+// ---------- COMBO UI ----------
+function refreshCombo() {
+  const comboDiv = document.getElementById("comboList");
+  comboDiv.innerHTML = "";
+
+  const targets = document.querySelectorAll("#targetsList .row");
+
+  targets.forEach(row => {
+    const name = row.children[0].value;
+    if (!name) return;
+
+    const label = document.createElement("label");
+    label.style.display = "block";
+
+    label.innerHTML = `
+      <input type="checkbox" value="${name}"> ${name}
+    `;
+
+    comboDiv.appendChild(label);
+  });
+}
+
+// ---------- RUN ----------
+function runUI() {
+  try {
+    const targets = {};
+    const orbs = [];
+    const combo = [];
+
+    // Targets
+    const targetRows = document.querySelectorAll("#targetsList .row");
+
+    if (targetRows.length === 0) throw new Error("Add at least 1 target.");
+    if (targetRows.length > 20) throw new Error("Max 20 targets.");
+
+    targetRows.forEach(row => {
+      const name = row.children[0].value.trim();
+      const hp = Number(row.children[1].value);
+
+      if (!name) throw new Error("Target missing name.");
+      if (!hp || hp < 0) throw new Error("Invalid HP.");
+
+      targets[name] = hp;
+    });
+
+    // Orbs
+    const orbRows = document.querySelectorAll("#orbsList .row");
+
+    if (orbRows.length === 0) throw new Error("Add at least 1 orb.");
+    if (orbRows.length > 20) throw new Error("Max 20 orbs.");
+
+    orbRows.forEach(row => {
+      const type = row.children[0].value;
+      const dmg = Number(row.children[1].value);
+
+      if (!dmg || dmg < 0) throw new Error("Invalid orb damage.");
+
+      orbs.push([type, dmg]);
+    });
+
+    // Combo
+    document.querySelectorAll("#comboList input:checked")
+      .forEach(cb => combo.push(cb.value));
+
+    const result = calculateExactStats(targets, orbs, combo);
+
+    let text = "--- Results ---\n\n";
+
+    for (const id of Object.keys(result.destructionProbs)) {
+      text += `${id}:\n`;
+      text += `  Destroyed: ${(result.destructionProbs[id] * 100).toFixed(2)}%\n`;
+      text += `  Exp Damage: ${result.expectedDamage[id].toFixed(2)}\n\n`;
+    }
+
+    text += "--- Combo ---\n";
+    text += `Both: ${(result.bothDestroyedProb * 100).toFixed(2)}%\n`;
+    text += `Either: ${(result.eitherDestroyedProb * 100).toFixed(2)}%\n`;
+
+    document.getElementById("output").textContent = text;
+
+  } catch (err) {
+    document.getElementById("output").textContent = "Error:\n" + err.message;
+  }
+}
+
+// ---------- STARTER DATA ----------
+addTarget("Nibbit", 15);
+addTarget("Leaf Slime", 6);
+
+addOrb("L", 3);
+addOrb("G", 2);
+addOrb("L", 3);
+</script>
+
 </body>
 </html>
